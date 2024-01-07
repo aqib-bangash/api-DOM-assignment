@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-image: url('bg2.jpg'); /* Add your image URL here */
+            background-size: cover;
+            margin-right: 450px;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-attachment: fixed; /* This ensures that the background image remains fixed while scrolling */
+        }
+
+        #quiz-container {
+            width: 55%;
+            background-color: rgba(255, 255, 255, 0.3);
+            /* Semi-transparent white background */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #question {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .option:hover {
+            background-color: #678bd8;
+        }
+
+        #next-btn {
+            background-color: #678bd8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        #next-btn:hover {
+            background-color: #3941d4;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="quiz-container">
+        <h1>Quiz App</h1>
+        <div id="question"></div>
+        <div id="options"></div>
+        <button id="next-btn">Next Question</button>
+    </div>
+
+    <script>
+        const apiUrl = 'https://opentdb.com/api.php?amount=5&type=multiple'; // Open Trivia Database API URL
+
+        let currentQuestionIndex = 0;
+        let questions = [];
+
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const nextButton = document.getElementById('next-btn');
+
+        async function fetchQuestions() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                questions = data.results;
+                displayQuestion();
+            } catch (error) {
+                console.error('Error fetching questions:', error);
+            }
+        }
+
+        function displayQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+
+            questionElement.innerHTML = currentQuestion.question;
+            optionsElement.innerHTML = '';
+
+            currentQuestion.incorrect_answers.forEach((option, index) => {
+                optionsElement.innerHTML += `
+                    <div class="option" data-index="${index}">
+                        ${option}
+                    </div>
+                `;
+            });
+
+            optionsElement.innerHTML += `
+                <div class="option" data-index="${currentQuestion.incorrect_answers.length}">
+                    ${currentQuestion.correct_answer}
+                </div>
+            `;
+
+            const optionElements = document.querySelectorAll('.option');
+            optionElements.forEach(optionElement => {
+                optionElement.addEventListener('click', checkAnswer);
+            });
+        }
+
+        function checkAnswer(event) {
+            const selectedOptionIndex = event.target.getAttribute('data-index');
+            const correctOptionIndex = questions[currentQuestionIndex].correct_answer === event.target.innerText
+                ? questions[currentQuestionIndex].incorrect_answers.length
+                : -1;
+
+            const isCorrect = selectedOptionIndex == correctOptionIndex;
+            highlightAnswer(isCorrect);
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    displayQuestion();
+                } else {
+                    alert('Quiz completed!');
+                }
+            }, 1000);
+        }
+
+        function highlightAnswer(isCorrect) {
+            const optionElements = document.querySelectorAll('.option');
+            optionElements.forEach((optionElement, index) => {
+                if (index == questions[currentQuestionIndex].incorrect_answers.length) {
+                    optionElement.style.backgroundColor = isCorrect ? '#7FFF7F' : '#FF7F7F';
+                } else {
+                    optionElement.style.backgroundColor = '#f0f0f0';
+                }
+            });
+        }
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                displayQuestion();
+            } else {
+                alert('Quiz completed!');
+            }
+        });
+
+        fetchQuestions();
+    </script>
+</body>
+
+</html>
